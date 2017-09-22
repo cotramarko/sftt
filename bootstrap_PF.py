@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal as mvn
@@ -16,17 +17,17 @@ def mvn_pdf(x, mu, sigma):
 
 class ParticleFilter():
     """docstring for ParticleFilter"""
-    def __init__(self, prior_dist, motion_model, meas_model, N_particles):
+    def __init__(self, prior_dist, motion_model, meas_model, N):
         self.prior_dist = prior_dist
         self.meas_model = meas_model
         self.motion_model = motion_model
-        self.N_particles = N_particles
+        self.N = N
 
         self.init_state()
 
     def init_state(self):
-        self.x = self.prior_dist.draw_samples(self.N_particles)
-        self.w = np.ones(shape=(self.N_particles)) / self.N_particles
+        self.x = self.prior_dist.draw_samples(self.N)
+        self.w = np.ones(shape=(self.N)) / self.N
 
     def predict(self):
         self.x = self.motion_model.propagate(self.x)
@@ -36,8 +37,15 @@ class ParticleFilter():
         self.w = self.w / np.sum(self.w)
 
     def resample(self):
-        self.x = np.random.choice(self.x, p=self.w)
-        self.w = np.ones(shape=(self.N_particles)) / self.N_particles
+        idx = np.random.choice(np.arange(0, self.N), p=self.w, size=self.N)
+        self.x = self.x[idx, :]
+        self.w = np.ones(shape=(self.N)) / self.N
+
+    def get_MMSE(self):
+        raise NotImplementedError
+
+    def get_MAP(self):
+        raise NotImplementedError
 
 
 if __name__ == '__main__':
@@ -64,20 +72,30 @@ if __name__ == '__main__':
     class meas_model():
         def __init__(self):
             self.H = np.diag([1, 1])
+            self.r_cov = 0.5 ** 2
+            self.R = self.r_cov * np.diag([1, 1])
 
         def likelihood(self, z, x):
-            pass
+            return mvn_pdf(x, z, self.R)
 
     x = np.array([[3, 4], [2, 1], [7, 8], [0, 0]])
 
     mm = motion_model()
     y = mm.propagate(x)
 
-    N_particles = 2
-    pf = ParticleFilter(prior_dist(), motion_model(), None, N_particles)
+    N = 4
+    z = np.array([0, 0])
+
+    start = time.process_time()
+    pf = \
+        ParticleFilter(prior_dist(), motion_model(), meas_model(), N)
+
     pf.init_state()
+    pf.predict()
+    pf.update(z)
+    pf.resample()
+    end = time.process_time()
 
-    pdf = mvn_pdf(x, mu=np.array([0, 0]), sigma=np.array([[1, 0.3], [0.2, 1]]))
-    print('custom:', pdf)
-
-    print('scipy: ', mvn.pdf(x, np.array([0, 0]), np.array([[1, 0.3], [0.2, 1]])))
+    print('Execution time: ', (end - start))
+    print(pf.x)
+    print(pf.w)

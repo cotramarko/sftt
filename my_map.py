@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import time
 
 
 def draw_rectangle(spec, fill_block=True):

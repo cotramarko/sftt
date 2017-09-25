@@ -1,7 +1,5 @@
 import time
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.stats import multivariate_normal as mvn
 
 
 def mvn_pdf(x, mu, sigma):

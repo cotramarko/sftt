@@ -48,6 +48,12 @@ class ParticleFilter():
         raise NotImplementedError
 
 
+# ============================================================================================
+#
+#   TESTS
+#
+# ============================================================================================
+
 if __name__ == '__main__':
 
     class prior_dist():
@@ -80,8 +86,8 @@ if __name__ == '__main__':
 
     x = np.array([[3, 4], [2, 1], [7, 8], [0, 0]])
 
-    mm = motion_model()
-    y = mm.propagate(x)
+    model = motion_model()
+    y = model.propagate(x)
 
     N = 4
     z = np.array([0, 0])

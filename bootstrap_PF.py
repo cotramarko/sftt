@@ -1,4 +1,3 @@
-import time
 import numpy as np
 
 
@@ -11,6 +10,13 @@ def mvn_pdf(x, mu, sigma):
 
     pdf = a * np.exp(b)
     return pdf
+
+
+def normal_pdf(x, mu, cov):
+    a = 1 / np.sqrt(2 * np.pi * cov)
+    b = np.exp(-np.square(x - mu) / (2 * cov))
+
+    return a * b
 
 
 class ParticleFilter():
@@ -44,62 +50,3 @@ class ParticleFilter():
 
     def get_MAP(self):
         raise NotImplementedError
-
-
-# ============================================================================================
-#
-#   TESTS
-#
-# ============================================================================================
-
-if __name__ == '__main__':
-
-    class prior_dist():
-        def __init__(self):
-            pass
-
-        def draw_samples(self, N):
-            return np.random.multivariate_normal([0, 0], np.diag([.5, .5]), N)
-
-    class motion_model():
-        def __init__(self):
-            self.A = np.diag([1, 1])
-            self.q_cov = 0.1 ** 2
-            self.Q = self.q_cov * np.diag([1, 1])
-
-        def propagate(self, x):
-            N = x.shape[0]
-            x = np.sum(x[:, np.newaxis, :] * self.A.transpose(), axis=2) \
-                + np.random.multivariate_normal([0, 0], self.Q, N)
-            return x
-
-    class meas_model():
-        def __init__(self):
-            self.H = np.diag([1, 1])
-            self.r_cov = 0.5 ** 2
-            self.R = self.r_cov * np.diag([1, 1])
-
-        def likelihood(self, z, x):
-            return mvn_pdf(x, z, self.R)
-
-    x = np.array([[3, 4], [2, 1], [7, 8], [0, 0]])
-
-    model = motion_model()
-    y = model.propagate(x)
-
-    N = 4
-    z = np.array([0, 0])
-
-    start = time.process_time()
-    pf = \
-        ParticleFilter(prior_dist(), motion_model(), meas_model(), N)
-
-    pf.init_state()
-    pf.predict()
-    pf.update(z)
-    pf.resample()
-    end = time.process_time()
-
-    print('Execution time: ', (end - start))
-    print(pf.x)
-    print(pf.w)

@@ -15,7 +15,8 @@ def draw_rectangle(spec, axes, fill_block=True):
     if fill_block:
         axes.fill(coords[:, 0], coords[:, 1], c='k')
     else:
-        closed_coords = np.concatenate((coords, coords[0, :].reshape(1, 2)), axis=0)
+        closed_coords = \
+            np.concatenate((coords, coords[0, :].reshape(1, 2)), axis=0)
         axes.plot(closed_coords[:, 0], closed_coords[:, 1], 'k')
 
 
@@ -48,8 +49,10 @@ def is_in_rect(p, rect):
 
 
 class Map():
-    '''Represents the map, holds all rectangles representing the boundry and
-    has methods for checking whether a point is in the valid region of the map'''
+    '''
+    Represents the map, holds all rectangles representing the boundry and
+    has methods for checking whether a point is in the valid region of the map
+    '''
     def __init__(self, axes):
         #                x  y  dx dy
         self.boundry = [(3, 0, 1, 4),

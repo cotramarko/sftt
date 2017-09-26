@@ -37,11 +37,16 @@ class ParticleFilter():
         self.x = self.motion_model.propagate(self.x)
 
     def update(self, z):
-        self.w = self.w * self.meas_model.likelihood(z, self.x)
+        # TODO use kill_invalid only once
+        (lik, _, _) = self.meas_model.likelihood(z, self.x)
+        (self.x, idx) = self.meas_model.kill_invalid(self.x)
+        self.w = self.w[idx]
+
+        self.w = self.w * lik
         self.w = self.w / np.sum(self.w)
 
     def resample(self):
-        idx = np.random.choice(np.arange(0, self.N), p=self.w, size=self.N)
+        idx = np.random.choice(np.arange(0, self.w.size), p=self.w, size=self.N)
         self.x = self.x[idx, :]
         self.w = np.ones(shape=(self.N)) / self.N
 

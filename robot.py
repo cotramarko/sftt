@@ -4,7 +4,6 @@ from my_map import Map
 
 
 # TODO: Replace this with the new version from main.py
-@DeprecationWarning
 def distance_to_object(x, y, phi, map_object):
     ''' Computes the distance from (x,y) with heading phi towards the nearest
     object found in the map. The map is held by the map_object '''
@@ -55,7 +54,7 @@ class Robot():
 
         self.ray, self.collision_point, self.dist = self.distance_to_object()
 
-        if self.sensor_noise_cov is not None:  # add sensor noise to the readings
+        if self.sensor_noise_cov is not None:  # add noise to the sensor
             self.dist += np.random.normal(scale=np.sqrt(self.sensor_noise_cov))
 
         if f is not None:
@@ -82,10 +81,14 @@ class RobotIllustrator():
     def draw_robot(self):
         ray, collision_point, dist = self.robot.distance_to_object()
 
-        self.t_handles.append(self.ax.text(7, 11, 'r: %.3f, v: %.3f' % (dist[0], self.robot.v)))
-        self.p_handles.append(self.ax.plot(self.robot.x, self.robot.y, 'bo')[0])
-        self.p_handles.append(self.ax.plot(ray[:, 0], ray[:, 1], 'r:')[0])
-        self.p_handles.append(self.ax.plot(collision_point[0], collision_point[1], 'rx')[0])
+        self.t_handles.append(
+            self.ax.text(7, 11, 'r: %.3f, v: %.3f' % (dist[0], self.robot.v)))
+        self.p_handles.append(
+            self.ax.plot(self.robot.x, self.robot.y, 'bo')[0])
+        self.p_handles.append(
+            self.ax.plot(ray[:, 0], ray[:, 1], 'r:')[0])
+        self.p_handles.append(
+            self.ax.plot(collision_point[0], collision_point[1], 'rx')[0])
 
     def remove_robot(self):
         for h in self.p_handles:
@@ -133,7 +136,7 @@ if __name__ == '__main__':
 
     my_map.draw_map()
 
-    f = open('robot_log.txt', 'w')
+    f = open('robot_log2.txt', 'w')
     f.write(robot.get_state_as_string())  # get initial state at T=0
     while keep_running:
 

@@ -1,4 +1,5 @@
 import time
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -76,30 +77,30 @@ class meas_model():
         self.r_cov = r_cov
         self.map_object = map_object
 
-    def _kill_invalid(self, st):
+    def kill_invalid(self, st):
         idx = self.map_object.valid_point(st[:, 0:2])
-        return st[idx, :]
+        return st[idx, :], idx
 
     def likelihood(self, z, st):
 
-        valid_st = self._kill_invalid(st)
+        (valid_st, _) = self.kill_invalid(st)
 
         (rays, hits, z_pred) = distance_to_object(valid_st[:, 0],
                                                   valid_st[:, 1],
                                                   valid_st[:, 3],
                                                   self.map_object)
 
-        return normal_pdf(z_pred, z, self.r_cov), rays, hits
+        return normal_pdf(z, z_pred, self.r_cov), rays, hits
 
 
-if __name__ == '__main__':
+def test():
     fig, ax = plt.subplots()
-    fig.set_size_inches(20, 20)
+    fig.set_size_inches(5, 5)
     my_map = Map(ax)
     my_map.draw_map()
 
     p = prior_dist()
-    state = p.draw_samples(10)
+    state = p.draw_samples(100)
 
     # ax.plot(state[:, 0], state[:, 1], 'r.')
 
@@ -113,10 +114,52 @@ if __name__ == '__main__':
     print(np.min(liks), np.max(liks), np.sum(liks))
 
     print(time.time() - t)
-    for r in rays:
-        ax.plot(r[:, 0], r[:, 1], ':r')
-    for h in hits:
-        ax.plot(h[0], h[1], 'xr')
+#    for r in rays:
+#        ax.plot(r[:, 0], r[:, 1], ':r')
+#    for h in hits:
+#        ax.plot(h[0], h[1], 'xr')
 
-plt.axis('equal')
-plt.show()
+    plt.axis('equal')
+    plt.axis([-5, 15, -5, 15])
+    plt.show()
+
+
+if __name__ == '__main__':
+    fig, ax = plt.subplots()
+    fig.set_size_inches(10, 10)
+    my_map = Map(ax)
+    my_map.draw_map()
+
+    pd = prior_dist()
+    motion = motion_model(0.1, 0.1, 2)
+    meas = meas_model(1, my_map)
+
+    pf = ParticleFilter(pd, motion, meas, 5000)
+    pf.init_state()
+
+    st = pf.x
+    lo = ax.scatter(st[:, 0], st[:, 1], c='r', s=1)
+#    plt.pause(2)
+
+    with open('robot_log.txt') as file:
+        reader = csv.reader(file)
+        lr, = ax.plot(0, 0, 'r.')
+        for i, r in enumerate(reader):
+            if i > 0:
+                d = np.array(r, dtype=np.float32)
+                pf.predict()
+                pf.update(d[-1])
+
+                st = pf.x
+                w = pf.w
+                lo.remove()
+                lo = ax.scatter(st[:, 0], st[:, 1], c=w, cmap='Reds', s=1)
+                lr.remove()
+                lr, = ax.plot(d[1], d[2], 'bo', mfc='none')
+
+                plt.savefig('pic_%.5d.png' % i, dpi=300)
+
+#                plt.pause(0.1)
+
+                pf.resample()
+                print('done with %d' % i)

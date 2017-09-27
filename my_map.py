@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 # ==================================================================================================
 # Helper functions
@@ -53,7 +54,7 @@ class Map():
     Represents the map, holds all rectangles representing the boundry and
     has methods for checking whether a point is in the valid region of the map
     '''
-    def __init__(self, axes):
+    def __init__(self, axes=None):
         #                x  y  dx dy
         self.boundry = [(3, 0, 1, 4),
                         (7, 0, 3, 3),
@@ -67,6 +68,9 @@ class Map():
 
     def draw_map(self):
         '''Draws a map containing all rectangles'''
+        if self.ax is None:
+            (_, self.ax) = plt.subplots()
+
         draw_rectangle(self.room, self.ax, fill_block=False)
         for b in self.boundry:
             draw_rectangle(b, self.ax)

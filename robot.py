@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from my_map import Map
@@ -57,11 +58,12 @@ class Robot():
         self.T += self.dt
 
         self.dphi = dphi
+
+        self.x += self.dt * self.v * np.cos(self.phi)
+        self.y += self.dt * self.v * np.sin(self.phi)
+
         self.phi += dphi * self.dt
         self.v += dv * self.dt
-
-        self.x += self.v * np.cos(self.phi)
-        self.y += self.v * np.sin(self.phi)
 
         self.ray, self.collision_point, self.dist = self.distance_to_object()
 
@@ -95,7 +97,7 @@ class RobotIllustrator():
 
         laser_ray = np.vstack(([self.robot.x, self.robot.y], collision_point))
         self.t_handles.append(
-            self.ax.text(7, 11, 'r: %.3f, v: %.3f' % (dist[0], self.robot.v)))
+            self.ax.text(7, 11, 'r: %.3f, v: %.3f, T: %.3f' % (dist[0], self.robot.v, self.robot.T)))
         self.p_handles.append(
             self.ax.plot(self.robot.x, self.robot.y, 'bo')[0])
         self.p_handles.append(
@@ -132,9 +134,9 @@ if __name__ == '__main__':
     def press(event):
         global f, keep_running
         if event.key == 'up':
-            robot.update(0.1, 0, f)
+            robot.update(1, 0, f)
         if event.key == 'down':
-            robot.update(-0.1, 0, f)
+            robot.update(-1, 0, f)
         if event.key == 'left':
             robot.update(0, np.pi / 10, f)
         if event.key == 'right':
@@ -149,13 +151,16 @@ if __name__ == '__main__':
 
     my_map.draw_map()
 
-    f = open('robot_log2.txt', 'w')
+    f = open('robot_log.txt', 'w')
     f.write(robot.get_state_as_string())  # get initial state at T=0
     while keep_running:
+        start_time = time.time()
 
         illustrator.remove_robot()
         robot.update(0, 0, f)
         illustrator.draw_robot()
-        plt.pause(0.1)
+        ex = time.time() - start_time
+        print(ex)
+        plt.pause(0.1 - ex)
 
     f.close()

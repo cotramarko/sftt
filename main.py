@@ -2,40 +2,11 @@ import time
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
 
 from bootstrap_PF import ParticleFilter, normal_pdf
 from my_map import Map
-from robot import Robot, RobotIllustrator
-
-
-def distance_to_object(x, y, phi, map_object):
-    ''' Computes the distance from (x,y) with heading phi towards the nearest
-    object found in the map. The map is held by the map_object '''
-    base_point = np.hstack((x.reshape(-1, 1), y.reshape(-1, 1))).reshape(1, -1, 2)
-    d_vec = np.hstack((np.cos(phi).reshape(-1, 1), np.sin(phi).reshape(-1, 1))).reshape(1, -1, 2)
-
-    dists = np.arange(0, 15, 0.01).reshape(-1, 1, 1)
-
-    ray = base_point + dists * d_vec  # DxNx2
-    (D, N, _) = ray.shape
-
-    all_points = ray.reshape(-1, 2)
-
-    idx = np.bitwise_not(map_object.valid_point(all_points))
-    idx = idx.reshape(D, N)
-
-    invalid_dists = dists.reshape(-1, 1) * idx
-    invalid_dists = invalid_dists.flatten()
-    invalid_dists[invalid_dists == 0] = np.nan
-    invalid_dists = invalid_dists.reshape(D, N)
-
-    z = np.nanmin(invalid_dists, axis=0)  # Nx2
-    idx_z = np.nanargmin(invalid_dists, axis=0)
-
-    ray_hits = ray[idx_z, np.arange(N), :]  # Nx2
-    ray = ray.transpose(1, 0, 2)  # NxDx2
-
-    return ray, ray_hits, z
+from robot import Robot, RobotIllustrator, distance_to_object
 
 
 class prior_dist():
@@ -73,8 +44,9 @@ class motion_model():
 
 
 class meas_model():
-    def __init__(self, r_cov, map_object):
+    def __init__(self, r_cov, v_cov, map_object):
         self.r_cov = r_cov
+        self.v_cov = v_cov
         self.map_object = map_object
 
     def kill_invalid(self, st):
@@ -83,83 +55,82 @@ class meas_model():
 
     def likelihood(self, z, st):
 
-        (valid_st, _) = self.kill_invalid(st)
-
-        (rays, hits, z_pred) = distance_to_object(valid_st[:, 0],
+        (valid_st, idx) = self.kill_invalid(st)
+        (rays, hits, r_pred) = distance_to_object(valid_st[:, 0],
                                                   valid_st[:, 1],
                                                   valid_st[:, 3],
                                                   self.map_object)
+        v_pred = valid_st[:, 2]
 
-        return normal_pdf(z, z_pred, self.r_cov), rays, hits
+        joint_lik = normal_pdf(z[0], r_pred, self.r_cov) * \
+            normal_pdf(z[1], v_pred, self.v_cov)
 
-
-def test():
-    fig, ax = plt.subplots()
-    fig.set_size_inches(5, 5)
-    my_map = Map(ax)
-    my_map.draw_map()
-
-    p = prior_dist()
-    state = p.draw_samples(100)
-
-    # ax.plot(state[:, 0], state[:, 1], 'r.')
-
-    model = motion_model(1, 1, 1)
-    state = model.propagate(state)
-    ax.plot(state[:, 0], state[:, 1], 'b.')
-
-    meas = meas_model(0.1, my_map)
-    t = time.time()
-    liks, rays, hits = meas.likelihood(2, state)
-    print(np.min(liks), np.max(liks), np.sum(liks))
-
-    print(time.time() - t)
-#    for r in rays:
-#        ax.plot(r[:, 0], r[:, 1], ':r')
-#    for h in hits:
-#        ax.plot(h[0], h[1], 'xr')
-
-    plt.axis('equal')
-    plt.axis([-5, 15, -5, 15])
-    plt.show()
+        return joint_lik, valid_st, idx
 
 
-if __name__ == '__main__':
+def draw_particles(ax, st, w):
+    x = st[:, 0]
+    y = st[:, 1]
+    phi = st[:, 3]
+    r = 0.1
+    lx = np.array([x, x + r * np.cos(phi)]).reshape(2, -1)
+    ly = np.array([y, y + r * np.sin(phi)]).reshape(2, -1)
+
+    sc_obj = ax.scatter(x, y, c=w, cmap='Reds', s=1)
+    pl_obj = ax.plot(lx, ly, 'r', linewidth=0.3)
+
+    return sc_obj, pl_obj
+
+
+def run_filter():
     fig, ax = plt.subplots()
     fig.set_size_inches(10, 10)
     my_map = Map(ax)
     my_map.draw_map()
 
     pd = prior_dist()
-    motion = motion_model(0.1, 0.1, 2)
-    meas = meas_model(1, my_map)
+    motion = motion_model(0.1, 0.5 ** 2, 0.5 ** 2)  # dt, v_cov, d_phicov
+
+    meas = meas_model(0.1 ** 2, 0.03 ** 2, my_map)  # r_cov, v_cov
 
     pf = ParticleFilter(pd, motion, meas, 5000)
     pf.init_state()
 
     st = pf.x
-    lo = ax.scatter(st[:, 0], st[:, 1], c='r', s=1)
-#    plt.pause(2)
+    w = pf.w
 
+    lo1, lo2 = draw_particles(ax, st, w)
+
+    plt.savefig('pic1_%.5d.png' % 0, dpi=300)
     with open('robot_log.txt') as file:
         reader = csv.reader(file)
         lr, = ax.plot(0, 0, 'r.')
         for i, r in enumerate(reader):
             if i > 0:
                 d = np.array(r, dtype=np.float32)
+
+                z = np.array([d[-1], d[3]])  # r, v
+
                 pf.predict()
-                pf.update(d[-1])
+                pf.update(z)
 
                 st = pf.x
                 w = pf.w
-                lo.remove()
-                lo = ax.scatter(st[:, 0], st[:, 1], c=w, cmap='Reds', s=1)
+
                 lr.remove()
                 lr, = ax.plot(d[1], d[2], 'bo', mfc='none')
+                lo1.remove()
+                for l in lo2:
+                    l.remove()
+                lo1, lo2 = draw_particles(ax, st, w)
 
-                plt.savefig('pic_%.5d.png' % i, dpi=300)
+                plt.savefig('pic1_%.5d.png' % i, dpi=300)
 
-#                plt.pause(0.1)
+                #plt.pause(0.1)
 
                 pf.resample()
                 print('done with %d' % i)
+
+
+if __name__ == '__main__':
+    run_filter()

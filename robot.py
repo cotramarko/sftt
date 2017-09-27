@@ -3,23 +3,34 @@ import matplotlib.pyplot as plt
 from my_map import Map
 
 
-# TODO: Replace this with the new version from main.py
 def distance_to_object(x, y, phi, map_object):
     ''' Computes the distance from (x,y) with heading phi towards the nearest
     object found in the map. The map is held by the map_object '''
-    base_point = np.array([x, y]).reshape(-1, 2)
-    d_vec = np.array([np.cos(phi), np.sin(phi)]).reshape(1, 2)
-    dists = np.arange(0, 15, 0.01).reshape(-1, 1)
+    base_point = np.hstack((x.reshape(-1, 1), y.reshape(-1, 1))).reshape(1, -1, 2)
+    d_vec = np.hstack((np.cos(phi).reshape(-1, 1), np.sin(phi).reshape(-1, 1))).reshape(1, -1, 2)
 
-    ray = base_point + dists * d_vec
+    dists = np.arange(0, 15, 0.01).reshape(-1, 1, 1)
 
-    idx = map_object.valid_point(ray)
-    ray_invalid = ray[np.bitwise_not(idx)]
+    ray = base_point + dists * d_vec  # DxNx2
+    (D, N, _) = ray.shape
 
-    d = dists[np.bitwise_not(idx)]
-    ray = ray[dists.flatten() < d[0].flatten(), :]
+    all_points = ray.reshape(-1, 2)
 
-    return ray, ray_invalid[0, :], d[0]
+    idx = np.bitwise_not(map_object.valid_point(all_points))
+    idx = idx.reshape(D, N)
+
+    invalid_dists = dists.reshape(-1, 1) * idx
+    invalid_dists = invalid_dists.flatten()
+    invalid_dists[invalid_dists == 0] = np.nan
+    invalid_dists = invalid_dists.reshape(D, N)
+
+    z = np.nanmin(invalid_dists, axis=0)  # Nx2
+    idx_z = np.nanargmin(invalid_dists, axis=0)
+
+    ray_hits = ray[idx_z, np.arange(N), :]  # Nx2
+    ray = ray.transpose(1, 0, 2)  # NxDx2
+
+    return ray, ray_hits, z
 
 
 class Robot():
@@ -66,7 +77,8 @@ class Robot():
         return state_arr
 
     def distance_to_object(self):
-        return distance_to_object(self.x, self.y, self.phi, self.map_object)
+        st = np.array([self.x, self.y, self.phi])
+        return distance_to_object(st[0], st[1], st[2], self.map_object)
 
 
 class RobotIllustrator():
@@ -79,16 +91,17 @@ class RobotIllustrator():
         self.t_handles = []
 
     def draw_robot(self):
-        ray, collision_point, dist = self.robot.distance_to_object()
+        _, collision_point, dist = self.robot.distance_to_object()
 
+        laser_ray = np.vstack(([self.robot.x, self.robot.y], collision_point))
         self.t_handles.append(
             self.ax.text(7, 11, 'r: %.3f, v: %.3f' % (dist[0], self.robot.v)))
         self.p_handles.append(
             self.ax.plot(self.robot.x, self.robot.y, 'bo')[0])
         self.p_handles.append(
-            self.ax.plot(ray[:, 0], ray[:, 1], 'r:')[0])
+            self.ax.plot(laser_ray[:, 0], laser_ray[:, 1], 'r:')[0])
         self.p_handles.append(
-            self.ax.plot(collision_point[0], collision_point[1], 'rx')[0])
+            self.ax.plot(collision_point[:, 0], collision_point[:, 1], 'rx')[0])
 
     def remove_robot(self):
         for h in self.p_handles:

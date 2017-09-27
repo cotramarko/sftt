@@ -38,8 +38,7 @@ class ParticleFilter():
 
     def update(self, z):
         # TODO use kill_invalid only once
-        (lik, _, _) = self.meas_model.likelihood(z, self.x)
-        (self.x, idx) = self.meas_model.kill_invalid(self.x)
+        (lik, self.x, idx) = self.meas_model.likelihood(z, self.x)
         self.w = self.w[idx]
 
         self.w = self.w * lik

@@ -11,11 +11,11 @@ class prior_dist():
         x = np.random.uniform(0, 10, (N, 1))
         y = np.random.uniform(0, 10, (N, 1))
 
-        x = np.random.normal(loc=4, scale=1, size=(N, 1))
-        y = np.random.normal(loc=2, scale=1, size=(N, 1))
+#        x = np.random.normal(loc=4, scale=1, size=(N, 1))
+#        y = np.random.normal(loc=2, scale=1, size=(N, 1))
 
-        v = np.zeros((N, 1))
-        # v = np.random.uniform(-0.5, 0.5, (N, 1))
+#        v = np.zeros((N, 1))
+        v = np.random.uniform(-0.5, 0.5, (N, 1))
         phi = np.random.uniform(0, 2 * np.pi, (N, 1))
         phi = np.ones_like(phi) * np.pi / 2
         dphi = np.random.uniform(-np.pi / 4, np.pi / 4, (N, 1))

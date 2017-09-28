@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
     my_map.draw_map()
 
-    f = open('robot_log.txt', 'w')
+    f = open('robot_log3.txt', 'w')
     f.write(robot.get_state_as_string())  # get initial state at T=0
     while keep_running:
         start_time = time.time()

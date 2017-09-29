@@ -17,7 +17,10 @@ def distance_to_object(x, y, phi, map_object):
 
     all_points = ray.reshape(-1, 2)
 
+    start = time.time()
     idx = np.bitwise_not(map_object.valid_point(all_points))
+    print('\t map_object.valid_point: ', time.time() - start)
+
     idx = idx.reshape(D, N)
 
     invalid_dists = dists.reshape(-1, 1) * idx

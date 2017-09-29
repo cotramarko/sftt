@@ -1,3 +1,4 @@
+import time
 import numpy as np
 
 
@@ -37,8 +38,9 @@ class ParticleFilter():
         self.x = self.motion_model.propagate(self.x)
 
     def update(self, z):
-
+        start = time.time()
         (lik, self.x, idx) = self.meas_model.likelihood(z, self.x)
+        print('self.meas_model.likelihood: ', time.time() - start)
         self.w = self.w[idx]
 
         self.w = self.w * lik

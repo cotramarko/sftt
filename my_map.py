@@ -31,7 +31,6 @@ def is_in_rect(p, rect):
     AM = M - A
     AB = B - A
     AD = D - A
-
     AM_AB = np.dot(AM, AB)
     AB_AB = np.dot(AB, AB)
 
@@ -42,6 +41,35 @@ def is_in_rect(p, rect):
     cond2 = np.bitwise_and(0 < AM_AD, AM_AD < AD_AD)
 
     return np.bitwise_and(cond1, cond2)
+
+
+def is_in_rect_brad(p, rects):
+    # rects - Mx4
+    rects = np.array(rects)
+
+    A = rects[:, :2]  # Mx2
+    B = np.hstack((rects[:, 0, None], rects[:, 1, None] + rects[:, 3, None]))
+    D = np.hstack((rects[:, 0, None] + rects[:, 2, None], rects[:, 1, None]))
+
+    M = p  # Nx2
+
+    AM = M[:, None, :] - A[None, ...]  # NxMx2 points-by-boundries-by-xy
+    AB = B - A  # Mx2 boundries-by-xy
+    AD = D - A  # Mx2 boundries-by-xy
+
+    AM_AB = np.sum(AM * AB, axis=-1) # NxM
+    AM_AD = np.sum(AM * AD, axis=-1) # NxM
+
+    AB_AB = np.sum(AB * AB, axis=-1) # NxM
+    AD_AD = np.sum(AD * AD, axis=-1) # NxM
+
+    cond1 = np.bitwise_and(0 < AM_AB, AM_AB < AB_AB)
+    cond2 = np.bitwise_and(0 < AM_AD, AM_AD < AD_AD)
+
+    print(cond1)
+    print(cond2)
+
+    return AM
 
 
 # ==================================================================================================
@@ -83,3 +111,14 @@ class Map():
             res = np.bitwise_and(res, np.bitwise_not(is_in_rect(p, b)))
 
         return res
+
+
+if __name__ == '__main__':
+    my_map = Map(None)
+    points = np.array([[1, 1], [2, 2], [3, 3]])
+
+    for b in my_map.boundry:
+        r = is_in_rect(points, b)
+
+    print('broad version')
+    AM, AB, AD = is_in_rect_brad(points, my_map.boundry)

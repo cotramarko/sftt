@@ -93,7 +93,7 @@ def run_filter_with_plots():
 
     plt.axis('off')
     plt.tight_layout(pad=0.0)
-    with open('robot_log3.txt') as file:
+    with open('robot_log.txt') as file:
         reader = csv.reader(file)
         for i, r in enumerate(reader):
             d = np.array(r, dtype=np.float32)
@@ -101,7 +101,7 @@ def run_filter_with_plots():
             if i == 0:
                 lr, = ax.plot(d[1], d[2], 'ro', mfc='none')
                 lo1, lo2 = draw_particles(ax, st, w)
-                plt.savefig('pic3_%.5d.png' % i, dpi=300)
+#                plt.savefig('pic3_%.5d.png' % i, dpi=300)
                 for l in lo2:
                     l.remove()
 
@@ -118,11 +118,11 @@ def run_filter_with_plots():
                 lr, = ax.plot(d[1], d[2], 'ro', mfc='none')
                 lo1.remove()
                 lo1, lo2 = draw_particles(ax, st, w)
-                plt.savefig('pic3_%.5d.png' % i, dpi=300)
+#                plt.savefig('pic3_%.5d.png' % i, dpi=300)
                 for l in lo2:
                     l.remove()
 
-                #  plt.pause(0.1)
+                plt.pause(0.1)
 
                 pf.resample()
                 print('done with %d' % i)

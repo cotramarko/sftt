@@ -99,14 +99,12 @@ class RobotIllustrator():
         _, collision_point, dist = self.robot.distance_to_object()
 
         laser_ray = np.vstack(([self.robot.x, self.robot.y], collision_point))
-        self.t_handles.append(
-            self.ax.text(7, 11, 'r: %.3f, v: %.3f, T: %.3f' % (dist[0], self.robot.v, self.robot.T)))
-        self.p_handles.append(
-            self.ax.plot(self.robot.x, self.robot.y, 'bo')[0])
-        self.p_handles.append(
-            self.ax.plot(laser_ray[:, 0], laser_ray[:, 1], 'r:')[0])
-        self.p_handles.append(
-            self.ax.plot(collision_point[:, 0], collision_point[:, 1], 'rx')[0])
+        status_string = \
+            'r: %.3f, v: %.3f, T: %.3f' % (dist[0], self.robot.v, self.robot.T)
+        self.t_handles.append(self.ax.text(7, 11, status_string))
+        self.p_handles.append(self.ax.plot(self.robot.x, self.robot.y, 'bo')[0])
+        self.p_handles.append(self.ax.plot(laser_ray[:, 0], laser_ray[:, 1], 'r:')[0])
+        self.p_handles.append(self.ax.plot(collision_point[:, 0], collision_point[:, 1], 'rx')[0])
 
     def remove_robot(self):
         for h in self.p_handles:
@@ -154,7 +152,7 @@ if __name__ == '__main__':
 
     my_map.draw_map()
 
-    f = open('robot_log3.txt', 'w')
+    f = open('robot_log5.txt', 'w')
     f.write(robot.get_state_as_string())  # get initial state at T=0
     while keep_running:
         start_time = time.time()

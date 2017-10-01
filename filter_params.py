@@ -10,12 +10,12 @@ class prior_dist():
     def draw_samples(self, N):
         x = np.random.uniform(0, 10, (N, 1))
         y = np.random.uniform(0, 10, (N, 1))
+        v = np.random.uniform(-0.5, 0.5, (N, 1))
 
 #        x = np.random.normal(loc=4, scale=1, size=(N, 1))
 #        y = np.random.normal(loc=2, scale=1, size=(N, 1))
-
 #        v = np.zeros((N, 1))
-        v = np.random.uniform(-0.5, 0.5, (N, 1))
+
         phi = np.random.uniform(0, 2 * np.pi, (N, 1))
         phi = np.ones_like(phi) * np.pi / 2
         dphi = np.random.uniform(-np.pi / 4, np.pi / 4, (N, 1))
@@ -67,7 +67,6 @@ class meas_model():
         v_pred = valid_st[:, 2]
         dphi_pred = valid_st[:, 4]
 
-        # normal_pdf(z[0], d_pred, self.d_cov)
         joint_lik = normal_pdf(z[0], d_pred, self.d_cov) * \
             normal_pdf(z[1], v_pred, self.v_cov) * \
             normal_pdf(z[2], dphi_pred, self.dphi_cov)

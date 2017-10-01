@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -43,13 +44,15 @@ def is_in_rect(p, rect):
     return np.bitwise_and(cond1, cond2)
 
 
-def is_in_rect_brad(p, rects):
-    # rects - Mx4
+# Move this method into Map class or seperate it out
+def valid_point_broad(p, rects):
+    # rects - Mx4, p - Nx2
     rects = np.array(rects)
 
+    # preallocate some parts of this method
     A = rects[:, :2]  # Mx2
-    B = np.hstack((rects[:, 0, None], rects[:, 1, None] + rects[:, 3, None]))
-    D = np.hstack((rects[:, 0, None] + rects[:, 2, None], rects[:, 1, None]))
+    B = np.hstack((rects[:, 0, None], rects[:, 1, None] + rects[:, 3, None]))  # Mx2
+    D = np.hstack((rects[:, 0, None] + rects[:, 2, None], rects[:, 1, None]))  # Mx2
 
     M = p  # Nx2
 
@@ -57,19 +60,23 @@ def is_in_rect_brad(p, rects):
     AB = B - A  # Mx2 boundries-by-xy
     AD = D - A  # Mx2 boundries-by-xy
 
-    AM_AB = np.sum(AM * AB, axis=-1) # NxM
-    AM_AD = np.sum(AM * AD, axis=-1) # NxM
+    AM_AB = np.sum(AM * AB, axis=-1)  # NxM
+    AM_AD = np.sum(AM * AD, axis=-1)  # NxM
 
-    AB_AB = np.sum(AB * AB, axis=-1) # NxM
-    AD_AD = np.sum(AD * AD, axis=-1) # NxM
+    AB_AB = np.sum(AB * AB, axis=-1)  # NxM
+    AD_AD = np.sum(AD * AD, axis=-1)  # NxM
 
-    cond1 = np.bitwise_and(0 < AM_AB, AM_AB < AB_AB)
-    cond2 = np.bitwise_and(0 < AM_AD, AM_AD < AD_AD)
+    cond1 = np.bitwise_and(0 < AM_AB, AM_AB < AB_AB)  # NxM
+    cond2 = np.bitwise_and(0 < AM_AD, AM_AD < AD_AD)  # NxM
 
-    print(cond1)
-    print(cond2)
+    # valid point logic:
+    final_cond = np.bitwise_and(cond1, cond2)
+    # this slice represents the room coordiantes, which is why negation is used,
+    # beacuse we actually want to be in the room
+    final_cond[:, 0] = np.bitwise_not(final_cond[:, 0])
+    res = np.logical_not(np.sum(final_cond, axis=1))
 
-    return AM
+    return res
 
 
 # ==================================================================================================
@@ -112,13 +119,55 @@ class Map():
 
         return res
 
+    def valid_point_broad(self, p):
+        # rects - Mx4, p - Nx2
+        rects = np.array([self.room] + self.boundry)
+
+        # preallocate some parts of this method
+        A = rects[:, :2]  # Mx2
+        B = np.hstack((rects[:, 0, None], rects[:, 1, None] + rects[:, 3, None]))  # Mx2
+        D = np.hstack((rects[:, 0, None] + rects[:, 2, None], rects[:, 1, None]))  # Mx2
+
+        M = p  # Nx2
+
+        AM = M[:, None, :] - A[None, ...]  # NxMx2 points-by-boundries-by-xy
+        AB = B - A  # Mx2 boundries-by-xy
+        AD = D - A  # Mx2 boundries-by-xy
+
+        AM_AB = np.sum(AM * AB, axis=-1)  # NxM
+        AM_AD = np.sum(AM * AD, axis=-1)  # NxM
+
+        AB_AB = np.sum(AB * AB, axis=-1)  # NxM
+        AD_AD = np.sum(AD * AD, axis=-1)  # NxM
+
+        cond1 = np.bitwise_and(0 < AM_AB, AM_AB < AB_AB)  # NxM
+        cond2 = np.bitwise_and(0 < AM_AD, AM_AD < AD_AD)  # NxM
+
+        # logic related to seeing if a point is valid
+        final_cond = np.bitwise_and(cond1, cond2)
+        # this slice represents the room coordiantes, which is why negation is used,
+        # beacuse we actually want to be in the room
+        final_cond[:, 0] = np.bitwise_not(final_cond[:, 0])
+        res = np.logical_not(np.sum(final_cond, axis=1))
+
+        return res
+
 
 if __name__ == '__main__':
     my_map = Map(None)
-    points = np.array([[1, 1], [2, 2], [3, 3]])
+    points = np.array([[1, 1], [2, 2], [3, 3], [3.5, 3]])
+    points = np.random.normal(size=(1000000, 2))
 
-    for b in my_map.boundry:
-        r = is_in_rect(points, b)
+    print('normal version')
+    start = time.time()
+    r = my_map.valid_point(points)
+#    print(r)
+    print('time: ', time.time() - start)
+
+    print('')
 
     print('broad version')
-    AM, AB, AD = is_in_rect_brad(points, my_map.boundry)
+    start = time.time()
+    x = my_map.valid_point_broad(points)
+    print('time: ', time.time() - start)
+#    print(x)

@@ -52,7 +52,10 @@ class ParticleFilter():
         self.w = np.ones(shape=(self.N)) / self.N
 
     def get_MMSE(self):
-        raise NotImplementedError
+        mmse = np.sum(self.w[:, None] * self.x, axis=0)
+        return mmse
 
     def get_MAP(self):
-        raise NotImplementedError
+        map_idx = np.argmax(self.w)
+        map_ = self.x[map_idx, :]
+        return map_

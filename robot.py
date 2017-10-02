@@ -2,39 +2,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 from my_map import Map
-
-
-def distance_to_object(x, y, phi, map_object):
-    ''' Computes the distance from (x,y) with heading phi towards the nearest
-    object found in the map. The map is held by the map_object '''
-    base_point = np.hstack((x.reshape(-1, 1), y.reshape(-1, 1))).reshape(1, -1, 2)
-    d_vec = np.hstack((np.cos(phi).reshape(-1, 1), np.sin(phi).reshape(-1, 1))).reshape(1, -1, 2)
-
-    dists = np.arange(0, 15, 0.01).reshape(-1, 1, 1)
-
-    ray = base_point + dists * d_vec  # DxNx2
-    (D, N, _) = ray.shape
-
-    all_points = ray.reshape(-1, 2)
-
-    start = time.time()
-    idx = np.bitwise_not(map_object.valid_point(all_points))
-    print('\t map_object.valid_point: ', time.time() - start)
-
-    idx = idx.reshape(D, N)
-
-    invalid_dists = dists.reshape(-1, 1) * idx
-    invalid_dists = invalid_dists.flatten()
-    invalid_dists[invalid_dists == 0] = np.nan
-    invalid_dists = invalid_dists.reshape(D, N)
-
-    z = np.nanmin(invalid_dists, axis=0)  # Nx2
-    idx_z = np.nanargmin(invalid_dists, axis=0)
-
-    ray_hits = ray[idx_z, np.arange(N), :]  # Nx2
-    ray = ray.transpose(1, 0, 2)  # NxDx2
-
-    return ray, ray_hits, z
+from utils_np import distance_to_object
 
 
 class Robot():
@@ -83,7 +51,7 @@ class Robot():
 
     def distance_to_object(self):
         st = np.array([self.x, self.y, self.phi])
-        return distance_to_object(st[0], st[1], st[2], self.map_object)
+        return distance_to_object(st[0], st[1], st[2], self.map_object.room, self.map_object.boundry)
 
 
 class RobotIllustrator():
@@ -152,7 +120,7 @@ if __name__ == '__main__':
 
     my_map.draw_map()
 
-    f = open('robot_log5.txt', 'w')
+    f = open('data/robot_log5.txt', 'w')
     f.write(robot.get_state_as_string())  # get initial state at T=0
     while keep_running:
         start_time = time.time()

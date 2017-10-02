@@ -4,9 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import ConnectionPatch
 
-from bootstrap_PF import ParticleFilter
+from bootstrap_PF import ParticleFilter, prior_dist, motion_model, meas_model, meas_model_torch
 from my_map import Map
-from filter_params import prior_dist, motion_model, meas_model
 
 
 def draw_particles(ax, st, w, ms):
@@ -94,13 +93,15 @@ def draw_box(ax, x, y, delta):
 def run_filter():
 
     my_map = Map()
-    my_map.draw_map()
+#    my_map.draw_map()
 
     pd = prior_dist()
-    motion = motion_model(0.1, 0.1 ** 2, 1 ** 2)  # dt, q_v_cov, q_d_phicov
-    meas = meas_model(0.8 ** 2, 0.1 ** 2, 0.1 ** 2, my_map)  # r_d_cov, r_v_cov, r_d_phicov
+    motion = motion_model(0.1, 0.5 ** 2, 0.5 ** 2)  # dt, q_v_cov, q_d_phicov
+#    meas = meas_model(0.9 ** 2, 0.03 ** 2, 0.1 ** 2, my_map.room, my_map.boundry)  # r_d_cov, r_v_cov, r_d_phicov
+    
+    meas = meas_model_torch(0.9 ** 2, 0.03 ** 2, 0.1 ** 2, my_map.room, my_map.boundry)  # r_d_cov, r_v_cov, r_d_phicov
 
-    pf = ParticleFilter(pd, motion, meas, 10000)
+    pf = ParticleFilter(pd, motion, meas, 30000)
     pf.init_state()
 
     st = pf.x
@@ -110,7 +111,7 @@ def run_filter():
     x_pf = []
     w_pf = []
 
-    with open('robot_log5.txt') as file:
+    with open('data/robot_log.txt') as file:
         reader = csv.reader(file)
 
         for i, r in enumerate(reader):
@@ -133,7 +134,7 @@ def run_filter():
                 w_pf.append(w)
 
                 pf.resample()
-                print('\ndone with %d\n' % i)
+            print('done with %d' % i)
 
 
     filter_results = {'x_k': x_k, 'x_pf': x_pf, 'w_pf': w_pf}
@@ -155,7 +156,7 @@ def run_filter_with_plots():
     pd = prior_dist()
     motion = motion_model(0.1, 0.1 ** 2, 1 ** 2)  # dt, q_v_cov, q_d_phicov
 
-    meas = meas_model(0.8 ** 2, 0.1 ** 2, 0.1 ** 2, my_map)  # r_d_cov, r_v_cov, r_d_phicov
+    meas = meas_model(0.8 ** 2, 0.1 ** 2, 0.1 ** 2, my_map.room, my_map.boundry)  # r_d_cov, r_v_cov, r_d_phicov
 
     pf = ParticleFilter(pd, motion, meas, 1000)
     pf.init_state()
@@ -269,4 +270,3 @@ def run_filter_with_plots():
 
 if __name__ == '__main__':
     run_filter()
-#    run_filter_with_plots()

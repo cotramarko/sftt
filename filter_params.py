@@ -36,7 +36,6 @@ class motion_model():
         v = st[:, 2] + \
             np.random.normal(scale=np.sqrt(self.v_cov), size=st[:, 2].shape)
 
-        print(np.min(v), np.max(v))
         phi = st[:, 3] + self.dt * st[:, 4]
         dphi = st[:, 4] + \
             np.random.normal(scale=np.sqrt(self.dphi_cov), size=st[:, 4].shape)

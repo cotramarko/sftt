@@ -1,95 +1,81 @@
 {
-    "folders":
-    [
-        {
-            /*
-                Here you can "clean" up your workspace a little bit.
-                Put folders/files you dont want to see on the left in the exclude patterns
-
-                Finally, specify folders in "dont_copy" that you dont want to be copied over 
-                the ssh tunnel when you build to the juggernut.
-            */
-            "path": ".",
-            "folder_exclude_patterns": ["__pycache__", "logs"],
-            "file_exclude_patterns": [".gitignore", "*Icon*", ".pyc"],
-            "dont_copy": ["__pycache__", ".git", "checkpoints", "summaries", "summary"]
-        }
-    ],
-    "docker_setup":
-    [
-        /*
-            This part handles all the docker files available to the project.
-            -name   : Name of the image that will be created
-            -tag    : Tag of this particular image
-            -folder : Specify which folder (Under Dockerfiles) this dockerfile relates to
-        */
-        {
-            "name": "Cool",
-            "tag": "tag",
-            "folder": "torch_pf",
-        }
-    ],
-    "build_systems":
-    [
-        /*
-            This should generally not be changed, the name you can change to something else though.
-            The name you choose is the one you will se in the "Tools - Build Systems" selection
-        */
-        {
-            "name": "torch_pf_D",
-            "target": "custom_builder",
-            "type": "RUN",
-            "selector": "source.python"
-        }
-
-    ],
-    "build_setup":
-    [
-        /*
-            This is one of the most important settings in the project file.
-            -name                   : Not used right now
-            -docker_index           : Which docker_setup file to use, index starts from zero
-            -run_local              : Run locally on your machine, or send this through the ssh tunnel
-            -docker_image_exe       : How this is run inside the docker container, like python3, python, make, etc..
-            -docker_mount           : Optional mounts to include in the docker container
-            -docker_ssh_ip          : If building remotely, this is the tunnel used
-            -docker_use_cpu_only    : Force use CPU, even if a GPU is specified
-            -docker_GPU_Nr          : Which GPU to use
-            -docker_gui_active      : Share the X drivers if figures should get displayed (DOES NOT WORK THROUGH SSH!)
-        */
-        {
-            "name": "torch_pf_D",
-            "docker_index": 0,
-            "run_local": false,
-            "docker_image_exe": "python3",
-            "docker_mount": ["/media/deepdrive", "/media/SSD_LINK"],
-            "docker_ssh_ip": "juggernut@192.168.1.10",
-            "docker_use_ssh": true,
-            "docker_use_cpu_only": false,
-            "docker_GPU_Nr": [3],
-            "docker_gui_active": false
-        },
-    ],
-    /*
-        Interpreter settings, set the port to a unique port if you have multiple projects open
-    */
-    "interpreter":
-    {
-            "active": true,
-            "port": 19051
-    },
-
-    /*
-    General settings
-        -python_interpreter         : Points to the interpreter to use, notice the port is the same as above!
-        -rulers                     : Visualizes a ruler at the N character length mark
-        -pep8_max_line_length       : Pep8 setting overwrite
-    */
-    "settings": 
-    {
-        "python_interpreter": "tcp://localhost:19051",
-        "anaconda_linter_mark_style": "none",
-        "rulers": [120],
-        "pep8_max_line_length": 120 
-    }
+	"build_setup":
+	[
+		{
+			"docker_GPU_Nr":
+			[
+				3
+			],
+			"docker_gui_active": false,
+			"docker_image_exe": "python3",
+			"docker_index": 0,
+			"docker_mount":
+			[
+				"/media/deepdrive",
+				"/media/SSD_LINK"
+			],
+			"docker_ssh_ip": "juggernut@192.168.1.10",
+			"docker_use_cpu_only": false,
+			"docker_use_ssh": true,
+			"name": "torch_pf_D",
+			"run_local": false
+		}
+	],
+	"build_systems":
+	[
+		{
+			"name": "torch_pf_D",
+			"selector": "source.python",
+			"target": "custom_builder",
+			"type": "RUN"
+		},
+		{
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "Anaconda Python Builder",
+			"selector": "source.python",
+			"shell_cmd": "\"/usr/bin/python3\" -u \"$file\""
+		}
+	],
+	"docker_setup":
+	[
+		{
+			"folder": "torch_pf",
+			"name": "Cool",
+			"tag": "tag"
+		}
+	],
+	"folders":
+	[
+		{
+			"dont_copy":
+			[
+				"__pycache__",
+				".git",
+				"checkpoints",
+				"summaries",
+				"summary"
+			],
+			"file_exclude_patterns":
+			[
+				".gitignore",
+				"*Icon*",
+				".pyc"
+			],
+			"folder_exclude_patterns":
+			[
+				"__pycache__",
+				"logs"
+			],
+			"path": "."
+		}
+	],
+	"settings":
+	{
+		"anaconda_linter_mark_style": "none",
+		"pep8_max_line_length": 120,
+		"rulers":
+		[
+			120
+		]
+	}
 }

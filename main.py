@@ -21,8 +21,8 @@ def draw_particles(ax, st, w, ms):
 
 
 class Particles_vis():
-    def __init__(self, axes):
-        self.ax = axes
+    def __init__(self, ax):
+        self.ax = ax
         self.handle = None
 
     def draw(self, st, w, ms=5):
@@ -30,6 +30,10 @@ class Particles_vis():
 
     def remove(self):
         self.handle.remove()
+
+    def re_draw(self, st, w, ms=5):
+        self.remove()
+        self.draw(st, w, ms=ms)
 
 
 def update_zoomed_in_view(ax, x, y, delta):
@@ -56,9 +60,9 @@ def connect_plots(ax0, ax1, x, y, delta):
     return con0, con1
 
 
-class Frame(object):
-    def __init__(self, axes):
-        self.ax = axes
+class Frame():
+    def __init__(self, ax):
+        self.ax = ax
         self.handle = None
 
     def draw(self, x, y, delta):
@@ -73,6 +77,30 @@ class Frame(object):
 
     def remove(self):
         self.handle.remove()
+
+    def re_draw(self, x, y, delta):
+        self.remove()
+        self.draw(x, y, delta)
+
+
+class PlotState():
+    def __init__(self, ax, opt):
+        self.ax
+        self.opt = opt
+        self.handle = None
+
+    def draw(self, x, y, ms=None):
+        if ms is not None:
+            self.handle, = self.ax.plot(x, y, self.opt, mfc='none')
+        else:
+            self.handle, = self.ax.plot(x, y, self.opt, mfc='none', ms=ms)
+
+    def remove(self):
+        self.handle.remove()
+
+    def re_draw(self, x, y, ms=None):
+        self.remove()
+        self.draw(x, y, ms=ms)
 
 
 def draw_box(ax, x, y, delta):
@@ -92,15 +120,14 @@ def draw_box(ax, x, y, delta):
 def run_filter():
 
     my_map = Map()
-#    my_map.draw_map()
 
     pd = prior_dist()
     motion = motion_model(0.1, 0.5 ** 2, 0.5 ** 2)  # dt, q_v_cov, q_d_phicov
 #    meas = meas_model(0.9 ** 2, 0.03 ** 2, 0.1 ** 2, my_map.room, my_map.boundry)  # r_d_cov, r_v_cov, r_d_phicov
-    
+
     meas = meas_model_torch(0.9 ** 2, 0.03 ** 2, 0.1 ** 2, my_map.room, my_map.boundry)  # r_d_cov, r_v_cov, r_d_phicov
 
-    pf = ParticleFilter(pd, motion, meas, 30000)
+    pf = ParticleFilter(pd, motion, meas, 10000)
     pf.init_state()
 
     st = pf.x
@@ -139,9 +166,9 @@ def run_filter():
 
 
 def run_filter_with_plots():
-    fig, axes = plt.subplots(1, 2, gridspec_kw={'width_ratios': [2, 1]})
+    fig, ax = plt.subplots(1, 2, gridspec_kw={'width_ratios': [2, 1]})
 
-    (ax0, ax1) = axes
+    (ax0, ax1) = ax
     fig.set_size_inches(20, 12)
     my_map = Map(ax0)
     my_map.draw_map()

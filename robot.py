@@ -56,8 +56,9 @@ class Robot():
 
 class RobotIllustrator():
     '''Creates and removes plots associated with a robot class'''
-    def __init__(self, axes, robot):
-        self.ax = axes
+
+    def __init__(self, ax, robot):
+        self.ax = ax
         self.robot = robot
 
         self.p_handles = []

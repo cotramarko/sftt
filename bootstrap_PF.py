@@ -1,4 +1,3 @@
-import time
 import numpy as np
 import utils_np
 
@@ -7,7 +6,8 @@ import utils_torch
 
 
 class ParticleFilter():
-    """docstring for ParticleFilter"""
+    """Generic particle filter"""
+
     def __init__(self, prior_dist, motion_model, meas_model, N):
         self.prior_dist = prior_dist
         self.meas_model = meas_model
@@ -24,9 +24,7 @@ class ParticleFilter():
         self.x = self.motion_model.propagate(self.x)
 
     def update(self, z):
-        start = time.time()
         (lik, self.x, idx) = self.meas_model.likelihood(z, self.x)
-        print('self.meas_model.likelihood: ', time.time() - start)
         self.w = self.w[idx]
 
         self.w = self.w * lik
@@ -48,6 +46,8 @@ class ParticleFilter():
 
 
 class prior_dist():
+    """Represents a prior distribution over the robot's state"""
+
     def __init__(self):
         pass
 
@@ -69,12 +69,18 @@ class prior_dist():
 
 
 class motion_model():
+    """Represents how the robot's state evolves over time"""
+
     def __init__(self, dt, v_cov, dphi_cov):
+        ''' dt - sampling time
+            v_cov  - covariance for velocity
+            dphi_cov - covariance for turningratio '''
         self.dt = dt
         self.v_cov = v_cov
         self.dphi_cov = dphi_cov
 
     def propagate(self, st):
+        """ Propagates the robot's state for a single step """
         x = st[:, 0] + st[:, 2] * self.dt * np.cos(st[:, 3])
         y = st[:, 1] + st[:, 2] * self.dt * np.sin(st[:, 3])
         v = st[:, 2] + \
@@ -102,7 +108,6 @@ class meas_model():
         return st[idx, :], idx
 
     def likelihood(self, z, st):
-
         (valid_st, idx) = self.kill_invalid(st)
         (rays, hits, d_pred) = utils_np.distance_to_object(valid_st[:, 0],
                                                            valid_st[:, 1],
@@ -130,7 +135,6 @@ class meas_model_torch():
 
         self.rects = torch.Tensor([self.room] + self.boundry).type(torch.FloatTensor).cuda()
         self.dists = torch.arange(0, 15, 0.01).view(-1, 1, 1).type(torch.FloatTensor).cuda()
-
 
     def kill_invalid(self, st):
         idx = utils_torch.valid_point(st[:, 0:2], self.rects)

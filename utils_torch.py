@@ -4,6 +4,7 @@ import numpy as np
 from my_map import Map
 import utils_np
 
+
 def normal_pdf(x, mu, cov):
     a = 1 / torch.sqrt(2 * 3.14 * cov)
     b = torch.exp(-torch.pow(x - mu, 2) / (2 * cov))

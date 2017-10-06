@@ -4,12 +4,6 @@ import matplotlib.pyplot as plt
 from utils_np import valid_point, valid_point_broad
 
 # ==================================================================================================
-# Helper functions
-# ==================================================================================================
-
-
-
-# ==================================================================================================
 # Map class
 # ==================================================================================================
 
@@ -19,7 +13,8 @@ class Map():
     Represents the map, holds all rectangles representing the boundry and
     the room. Can also draw the room.
     '''
-    def __init__(self, axes=None):
+
+    def __init__(self, ax=None):
         #                x  y  dx dy
         self.boundry = [(3, 0, 1, 4),
                         (7, 0, 3, 3),
@@ -28,9 +23,8 @@ class Map():
                         (1, 5, 2, 2)]
 
         self.room = (0, 0, 10, 10)
+        self.ax = ax
 
-        self.ax = axes
-    
     def draw_rectangle(self, rect, fill_block=True):
         '''Draws a rectangle according to the tuple rect - (x, y, dx, dy)'''
         (x, y, dx, dy) = rect

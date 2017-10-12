@@ -7,7 +7,7 @@ def distance_to_wall(x, y, phi, rects):
     q = np.hstack((x.reshape(-1, 1), y.reshape(-1, 1)))
     s = q + 15 * np.hstack((np.cos(phi.reshape(-1, 1)), np.sin(phi.reshape(-1, 1))))
 
-    rects = np.array(rects)  # Mx4 
+    rects = np.array(rects)  # Mx4
     L = np.array([[0, 0], [1, 1], [1, 0], [0, 1]])  # 4x2
 
     # pr holds all cornerpoints of the walls in the map, size Mx4x2
@@ -22,14 +22,19 @@ def distance_to_wall(x, y, phi, rects):
     # r - Mx2x2 --> 1xMx1x2x2
     # corresponds to (q-p)xr
     top = np.cross(diff[:, :, :, None, :], r[None, :, None, :, :])
-
 #    top = np.sum(diff[:, :, :, None, :] * r[None, :, None, :, :] * [1, -1], axis=-1)
+
     bot = np.cross(r[None, ...], s[:, None, None, :])
 #    bot = np.sum(r[None, ...] * s[:, None, None, :] * [1, -1], axis=-1)
 
     u = top / bot[:, :, None, :]  # NxMx1x2
     (N, M, _, _) = u.shape
     u = u.reshape(N, M, -1)
+
+    print('top:')
+    print(top)
+    print('bot:')
+    print(bot)
 
     print(u)
 
@@ -45,7 +50,7 @@ def distance_to_wall(x, y, phi, rects):
 if __name__ == '__main__':
     y = np.array([1])
     x = np.array([1])
-    phi = np.ones(1) * np.pi / 4
+    phi = np.ones(1) * np.pi / 2
     #           x  y  dx dy
 #    boundry = [(3, 0, 1, 4),
 #               (7, 0, 3, 3),

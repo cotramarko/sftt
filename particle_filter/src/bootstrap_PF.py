@@ -69,7 +69,7 @@ class prior_dist():
 
 
 class motion_model():
-    """Represents how the robot's state evolves over time"""
+    """Represents how the robot's state evolves over time."""
 
     def __init__(self, dt, v_cov, dphi_cov):
         ''' dt - sampling time

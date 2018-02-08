@@ -24,4 +24,6 @@ x = np.array([[0, 0], [0, 1], [1, 1]])
 
 cd = cross_distance(x)
 print(cd)
-print(in_range(cd))
+print(in_range(cd, range=1))
+
+print(np.triu_indices(3, k=1))

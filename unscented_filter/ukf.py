@@ -57,6 +57,7 @@ class UKF():
 
     def get_state(self):
         """
+        return (self.x, self.P)
         self.x.shape = (k, 1)
         self.P.shape = (k, k)
         """

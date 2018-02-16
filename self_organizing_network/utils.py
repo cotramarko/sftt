@@ -1,39 +1,35 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sftt.self_organizing_network.experiment import nodeNetwork, connect_positions, cross_distance
-import csv
 
 
-def create_pairs(in_range_matrix):
-    (j, _) = in_range_matrix.shape
-    nbr_of_neighbors = np.sum(in_range_matrix, axis=0)
-    sort_idx = np.argsort(nbr_of_neighbors)
-    nodes = np.arange(j)
+def diag_block_mat_boolindex(L):
+    shp = L[0].shape
+    mask = np.kron(np.eye(len(L)), np.ones(shp)) == 1
+    out = np.zeros(np.asarray(shp) * len(L), dtype=int)
+    out[mask] = np.concatenate(L).ravel()
+    return out
 
-    ordered_nodes = nodes[sort_idx]
 
-    pairs = []
-    while len(ordered_nodes) > 1:
-        r = ordered_nodes[0]
-        probs = in_range_matrix[r, ordered_nodes] / np.sum(in_range_matrix[r, ordered_nodes])
-        nn = np.random.choice(ordered_nodes, p=probs)
-        in_range_matrix[:, nn] = 0
-        in_range_matrix[nn, :] = 0
+def cross_distance(x):
+    (N, _) = x.shape
+    delta = x[None, ...] - x[:, None, :]
+    z = np.linalg.norm(delta.reshape(-1, 2), ord=2, axis=1)
+    return z.reshape(N, N)
 
-        idx_0, = np.where(ordered_nodes == r)
-        idx_1, = np.where(ordered_nodes == nn)
-        idx = np.concatenate((idx_0, idx_1))
-        ordered_nodes = np.delete(ordered_nodes, idx)
-        print('pair:', r, nn)
-        print('remaining nodes:', ordered_nodes)
-        pairs.append((r, nn))
 
-    if len(ordered_nodes) == 1:
-        pairs.append((ordered_nodes[0], ))
-    return pairs
+def in_range(meas_mat, sensor_range):
+    in_range_mat = (meas_mat > 0) & (meas_mat < sensor_range)
+    return in_range_mat
+
+
+def draw_cov(x, cov, col='k'):
+    phi = np.linspace(0, 2 * np.pi, 100)
+    sig3 = x[:, None] + 3 * np.dot(np.linalg.cholesky(cov), np.array([np.cos(phi), np.sin(phi)]))
+    plt.plot(sig3[0, :], sig3[1, :], col)
 
 
 if __name__ == '__main__':
+    # Temp kode, needs to be borken out into a function/class in different module
     np.random.seed(1337)
     N = 100
     sensor_range = 25
@@ -49,41 +45,40 @@ if __name__ == '__main__':
     in_range = (ms > 0) & (ms < sensor_range)
     in_range = in_range.astype(np.int16)
 
-    base_mapping = in_range[0:3, :].astype(np.bool)
+    print(in_range)
+    base_map = np.zeros(shape=(N + 3))
+    base_map[0:3] = 1
+#    base_map[:, 0:3] = 1
 
-    plt.figure()
+    list_of_nodes = np.arange(N + 3)
+
+    # plt.figure()
     nodes = np.concatenate((base, x_true))
     connect_positions(nodes, idx_rows, idx_cols, keep_elements)
     plt.plot(nodes[:, 0], nodes[:, 1], 'ko', mfc=(1, 1, 1))
     plt.plot(base[:, 0], base[:, 1], 'co', mfc='c')
-    plt.show()
+    i = 0
+    while len(list_of_nodes) > 0:
 
-'''
-    nodes = np.concatenate((base, x_true))
+        overlap = in_range * base_map[:, None]
+        overlap_idx = (np.sum(overlap, axis=0) > 1)  # all nodes present
 
-    node_network = nodeNetwork(base, x_true)
-    (idx_rows, idx_cols, keep_elements) = node_network.get_connections(range=sensor_range)
+        nodes_left_idx = overlap_idx[list_of_nodes]  # just keep the nodes that are still present
+        print('nodes_left_idx', nodes_left_idx.shape)
+        nodes_left = list_of_nodes[nodes_left_idx]
+        print('nodes_left', nodes_left)
 
-    z = node_network.z
+        for nl in nodes_left:
+            plt.plot(nodes[nl, 0], nodes[nl, 1], '.r', mfc='r')
+        plt.pause(0.25)
+        i += 1
+        selected_node = np.random.choice(nodes_left)
 
-    ms = cross_distance(x_true)
-    in_range = (ms > 0) & (ms < sensor_range)
-    in_range = in_range.astype(np.int16)
+        base_map[selected_node] = 1
+#        base_map[:, selected_node] = 1
 
-    pairs = create_pairs(in_range)
-    print(pairs)
-
-    plt.figure()
-    nodes = np.concatenate((base, x_true))
-    connect_positions(nodes, idx_rows, idx_cols, keep_elements)
-    plt.plot(nodes[:, 0], nodes[:, 1], 'ko', mfc=(1, 1, 1))
-    plt.plot(base[:, 0], base[:, 1], 'co', mfc='c')
-
-    x0 = np.random.uniform(size=(N, 2)) * 14 - 2
-    for pair in pairs:
-        plt.plot(x_true[pair, 0], x_true[pair, 1], '--r')
-        plt.plot(x0[pair, 0], x0[pair, 1], ':og')
-
-    plt.axis([-5, 10, -2, 13])
-    plt.show()
-'''
+        idx, = np.where(list_of_nodes == selected_node)
+        list_of_nodes = np.delete(list_of_nodes, idx)
+        plt.plot(nodes[selected_node, 0], nodes[selected_node, 1], '.b', mfc='b')
+        plt.pause(0.25)
+        i += 1

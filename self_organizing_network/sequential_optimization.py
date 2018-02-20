@@ -32,7 +32,27 @@ class NodeSelector():
             return None
 
 
-def optimizer(base_nodes_in_range, recorded_measurements, px):
+def optimizer(base_nodes_in_range, recorded_measurements, x0, cov0):
+    """
+    Parameters
+    ----------
+    base_nodes_in_range: np.array
+        (B, 2) array containing the known xy position of B number of nodes
+    recorded_measurements: np.array
+        (M, 1 + B) array containing M measurements observed between the B known nodes and
+        the unknown node
+    x0: np.array
+        (2, ) array representing the mean of the prior for the unknown node
+    cov0: np.array
+        (2, 2) array representing the covariance of the prior for the unknown node
+    """
+    n = 2
+    sigN = 1 + 2 * n
+    w0 = 1 - n / 3 * np.ones(shape=(1))
+    wi = (1 - w0) / (2 * n) * np.ones(shape=(2 * n))
+
+    W = np.concat((w0, wi))
+
     pass
 
 

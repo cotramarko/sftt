@@ -7,3 +7,7 @@ __pycache__/*
 .DS_Store
 *.pyc
 */__pycache__/*
+
+*.sublime-project
+
+sftt\.sublime-workspace

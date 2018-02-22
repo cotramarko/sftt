@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+
 from sftt.self_organizing_network.node_network import NodeNetwork
-# import sftt.self_organizing_network.utils
+import sftt.self_organizing_network.scenarios as sce
 
 
 class NodeSelector():
@@ -58,12 +59,12 @@ def optimizer(base_nodes_in_range, recorded_measurements, x0, cov0):
 
 if __name__ == '__main__':
     # Experiment
-    node_network = NodeNetwork()
+    node_network = NodeNetwork(sce.get_large_baseline)
     (base_map, in_range_mat, _) = node_network.get_network_properties()
     nodes = node_network.nodes
 
     B = node_network.B
-    N = node_network.N
+    N = node_network.NC
 
     node_selector = NodeSelector(B, N, in_range_mat, base_map)
 

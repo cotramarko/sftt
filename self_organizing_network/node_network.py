@@ -1,15 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sftt.self_organizing_network.utils import in_range, cross_distance
-
-BASE_NODES = np.array([[5, 5], [5, 7], [3, 4]])
+import sftt.self_organizing_network.scenarios as sce
 
 
 class NodeNetwork():
     """
-    Randomises a network of interconnect nodes, based on certain constraints such as size of 
-    the area the network is in, sensor range and the number of nodes
-    (with known and unknown position)
+    Creates a node network representation given a node scenario.
 
     Public methods
     ----------
@@ -21,33 +17,15 @@ class NodeNetwork():
     plot_node_network()
     """
 
-    def __init__(self, base_nodes=BASE_NODES, num_unknown_nodes=100, sensor_range=25,
-                 size_of_square=100, seed=1337):
+    def __init__(self, scenario_method):
         """
         Parameters
         ----------
-        base_nodes: np.array
-            (B, 2) array containing the known xy position of B number of nodes
-        num_unknown_nodes: int
-            The number of nodes with unknown xy position to be generated in the area
-        sensor_range: int
-            The range that each node is able to communicate in
-        size_of_square: int
-            Length of one side of the square area that the nodes are placed in
-        seed: int
-            Seed to be used for generating random numbers
+        scenario_method: method
+            A method from scenarios.py which adds the desired scenario to this class
 
         """
-        np.random.seed(seed)
-        self.N = num_unknown_nodes
-        self.base = base_nodes
-        (self.B, _) = base_nodes.shape
-        self.x_true = np.random.uniform(size=(self.N, 2)) * size_of_square
-        self.nodes = np.concatenate((self.base, self.x_true))
-
-        self._base_map = np.concatenate((np.ones((self.B)), np.zeros(self.N)))
-        self.node_true_dist_mat = cross_distance(self.nodes)
-        self.in_range_mat = in_range(self.node_true_dist_mat, sensor_range)
+        self = scenario_method(self)
 
     def get_network_properties(self):
         """
@@ -150,8 +128,8 @@ class NodeNetwork():
 
 
 if __name__ == '__main__':
-    node_network = NodeNetwork(num_unknown_nodes=100)
+    node_network = NodeNetwork(sce.get_small_symmetry_1)
     print(node_network.get_network_measurement())
-    print(node_network.get_network_measurement())
+    # print(node_network.get_network_measurement())
     node_network.plot_node_network()
     plt.show()
